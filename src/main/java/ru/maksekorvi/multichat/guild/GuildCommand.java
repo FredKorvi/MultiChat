@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 import ru.maksekorvi.multichat.chat.ChatChannel;
 import ru.maksekorvi.multichat.chat.ChatManager;
 import ru.maksekorvi.multichat.quest.QuestManager;
+import ru.maksekorvi.multichat.guild.menu.GuildMenu;
 import ru.maksekorvi.multichat.util.MessageService;
 
 import java.util.List;
@@ -16,12 +17,14 @@ public class GuildCommand implements CommandExecutor {
     private final GuildManager guildManager;
     private final ChatManager chatManager;
     private final QuestManager questManager;
+    private final GuildMenu guildMenu;
     private final MessageService messages;
 
-    public GuildCommand(GuildManager guildManager, ChatManager chatManager, QuestManager questManager, MessageService messages) {
+    public GuildCommand(GuildManager guildManager, ChatManager chatManager, QuestManager questManager, GuildMenu guildMenu, MessageService messages) {
         this.guildManager = guildManager;
         this.chatManager = chatManager;
         this.questManager = questManager;
+        this.guildMenu = guildMenu;
         this.messages = messages;
     }
 
@@ -37,7 +40,7 @@ public class GuildCommand implements CommandExecutor {
             return true;
         }
         if (args.length == 0) {
-            messages.sendRaw(player, "&6Гильдии: &e/g create|disband|invite|accept|kick|leave|info|top|bank|bonus|chat|quest|takequest|refusequest");
+            messages.sendRaw(player, "&6Гильдии: &e/g create|disband|invite|accept|kick|leave|info|top|bank|bonus|promote|demote|chat|mutechat|rules|reliability|quest|takequest|refusequest|menu");
             return true;
         }
         switch (args[0].toLowerCase()) {
@@ -137,6 +140,66 @@ public class GuildCommand implements CommandExecutor {
                 int bonus = Integer.parseInt(args[2]);
                 guildManager.bonus(player, bonusTarget, bonus);
                 return true;
+            case "promote":
+                if (args.length < 2) {
+                    messages.sendRaw(player, "&cИспользование: &e/g promote <player>");
+                    return true;
+                }
+                Player promoteTarget = Bukkit.getPlayer(args[1]);
+                if (promoteTarget == null) {
+                    messages.send(player, "errors.player-not-found");
+                    return true;
+                }
+                guildManager.promote(player, promoteTarget);
+                return true;
+            case "demote":
+                if (args.length < 2) {
+                    messages.sendRaw(player, "&cИспользование: &e/g demote <player>");
+                    return true;
+                }
+                Player demoteTarget = Bukkit.getPlayer(args[1]);
+                if (demoteTarget == null) {
+                    messages.send(player, "errors.player-not-found");
+                    return true;
+                }
+                guildManager.demote(player, demoteTarget);
+                return true;
+            case "mutechat":
+                guildManager.toggleGuildChatMute(player);
+                return true;
+            case "rules":
+                if (args.length < 2) {
+                    messages.sendRaw(player, "&cИспользование: &e/g rules view|set <text>");
+                    return true;
+                }
+                if (args[1].equalsIgnoreCase("view")) {
+                    guildManager.sendRules(player);
+                    return true;
+                }
+                if (args[1].equalsIgnoreCase("set")) {
+                    if (args.length < 3) {
+                        messages.sendRaw(player, "&cИспользование: &e/g rules set <text>");
+                        return true;
+                    }
+                    String text = String.join(" ", java.util.Arrays.copyOfRange(args, 2, args.length));
+                    String[] parts = text.split("\\\\|");
+                    java.util.List<String> rules = new java.util.ArrayList<>();
+                    for (String part : parts) {
+                        if (!part.trim().isEmpty()) {
+                            rules.add("&7- " + part.trim());
+                        }
+                    }
+                    guildManager.setRules(player, rules);
+                    return true;
+                }
+                messages.sendRaw(player, "&cИспользование: &e/g rules view|set <text>");
+                return true;
+            case "reliability":
+                guildManager.sendReliability(player);
+                return true;
+            case "menu":
+                guildMenu.open(player);
+                return true;
             case "chat":
                 guildManager.toggleGuildChat(player);
                 if (guildManager.isGuildChatEnabled(player.getUniqueId())) {
@@ -167,7 +230,7 @@ public class GuildCommand implements CommandExecutor {
                 messages.sendRaw(player, "&cИспользование: &e/g quest info|progress");
                 return true;
             default:
-                messages.sendRaw(player, "&6Гильдии: &e/g create|disband|invite|accept|kick|leave|info|top|bank|bonus|chat|quest|takequest|refusequest");
+                messages.sendRaw(player, "&6Гильдии: &e/g create|disband|invite|accept|kick|leave|info|top|bank|bonus|promote|demote|chat|mutechat|rules|reliability|quest|takequest|refusequest|menu");
                 return true;
         }
     }

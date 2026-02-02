@@ -29,6 +29,12 @@ settings:
         guildPoints: 20
       upgradeCostCurrency: 500
 ranks:
+  # permissions meanings:
+  # promote - повышение ранга участника
+  # demote - понижение ранга участника
+  # manageBank - управление банком (снятие)
+  # muteChat - включение/выключение мута чата гильдии
+  # manageRules - управление правилами гильдии
   1:
     name: "Ученик"
     permissions: ["chat", "quests"]
@@ -40,7 +46,7 @@ ranks:
     permissions: ["chat", "quests", "invite", "kick"]
   4:
     name: "Гилдмастер"
-    permissions: ["chat", "quests", "invite", "kick", "promote", "demote", "manageBank"]
+    permissions: ["chat", "quests", "invite", "kick", "promote", "demote", "manageBank", "muteChat", "manageRules"]
   5:
     name: "Лидер"
     permissions: ["*"]

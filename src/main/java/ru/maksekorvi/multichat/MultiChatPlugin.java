@@ -20,6 +20,8 @@ import ru.maksekorvi.multichat.moderation.ModerationCommand;
 import ru.maksekorvi.multichat.moderation.ModerationListener;
 import ru.maksekorvi.multichat.moderation.ModerationManager;
 import ru.maksekorvi.multichat.placeholder.MultiChatExpansion;
+import ru.maksekorvi.multichat.guild.menu.GuildMenu;
+import ru.maksekorvi.multichat.guild.menu.GuildMenuListener;
 import ru.maksekorvi.multichat.quest.QuestListener;
 import ru.maksekorvi.multichat.quest.QuestManager;
 import ru.maksekorvi.multichat.rules.RulesCommand;
@@ -37,6 +39,7 @@ public class MultiChatPlugin extends JavaPlugin {
     private ModerationManager moderationManager;
     private RulesManager rulesManager;
     private QuestManager questManager;
+    private GuildMenu guildMenu;
 
     private Economy economy;
     private Chat vaultChat;
@@ -58,6 +61,7 @@ public class MultiChatPlugin extends JavaPlugin {
         this.moderationManager = new ModerationManager(this, database, configManager, messageService);
         this.rulesManager = new RulesManager(configManager, messageService);
         this.questManager = new QuestManager(configManager, messageService, guildManager, economy);
+        this.guildMenu = new GuildMenu(guildManager, questManager);
 
         registerCommands();
         registerListeners();
@@ -82,7 +86,7 @@ public class MultiChatPlugin extends JavaPlugin {
         register(getCommand("changepass"), authManager.getChangePasswordCommand());
         register(getCommand("logout"), authManager.getLogoutCommand());
         register(getCommand("broadcast"), new BroadcastCommand(broadcastManager, messageService));
-        register(getCommand("g"), new GuildCommand(guildManager, chatManager, questManager, messageService));
+        register(getCommand("g"), new GuildCommand(guildManager, chatManager, questManager, guildMenu, messageService));
         register(getCommand("rules"), new RulesCommand(rulesManager, messageService));
         register(getCommand("multichat"), new RootCommand(this, configManager, messageService));
         ModerationCommand moderationCommand = new ModerationCommand(moderationManager, messageService);
@@ -104,6 +108,7 @@ public class MultiChatPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new ChatListener(chatManager, authManager, messageService), this);
         Bukkit.getPluginManager().registerEvents(new ModerationListener(moderationManager, messageService), this);
         Bukkit.getPluginManager().registerEvents(new QuestListener(questManager), this);
+        Bukkit.getPluginManager().registerEvents(new GuildMenuListener(guildMenu), this);
     }
 
     private void register(PluginCommand command, org.bukkit.command.CommandExecutor executor) {

@@ -84,6 +84,9 @@ public class ChatListener implements Listener {
                     messages.send(player, "errors.guild-not-found");
                     return;
                 }
+                if (!guildManager.canSpeakGuildChat(player)) {
+                    return;
+                }
                 guildManager.sendGuildMessage(player.getUniqueId(), formatted);
                 break;
             default:

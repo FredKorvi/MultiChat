@@ -15,6 +15,7 @@ errors:
   guild-no-permission: "&cНедостаточно прав гильдии."
   feature-disabled: "&cЭтот функционал отключен на сервере."
   no-active-quest: "&cУ вас нет активного квеста."
+  guild-chat-muted: "&cЧат гильдии временно замучен."
   moderation-banned: "&cВы забанены: {reason}"
   moderation-muted: "&cВы замучены: {reason}"
   moderation-frozen: "&cВы заморожены."
@@ -45,6 +46,9 @@ info:
   guild-quest-info: "&eКвест: {quest}"
   guild-quest-progress: "&eКвест: {quest} &7({progress}/{amount})"
   guild-quest-complete: "&aКвест выполнен: {quest}"
+  guild-chat-muted: "&eМут чата гильдии: {state}"
+  guild-rules-header: "&6Правила гильдии:"
+  guild-rules-updated: "&aПравила гильдии обновлены."
   moderation-kick: "&cВас кикнули: {reason}"
   moderation-warn: "&eВы получили предупреждение: {reason}"
 quest:

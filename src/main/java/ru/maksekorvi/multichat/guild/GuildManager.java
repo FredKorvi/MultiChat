@@ -59,6 +59,8 @@ public class GuildManager {
                 int level = section.getInt(key + ".level", 1);
                 int points = section.getInt(key + ".points", 0);
                 double currency = section.getDouble(key + ".currency", 0);
+                boolean chatMuted = section.getBoolean(key + ".chatMuted", false);
+                List<String> rules = section.getStringList(key + ".rules");
                 Map<UUID, Integer> members = new HashMap<>();
                 Map<UUID, Integer> reliability = new HashMap<>();
                 ConfigurationSection membersSec = section.getConfigurationSection(key + ".members");
@@ -76,7 +78,7 @@ public class GuildManager {
                         reliability.put(UUID.fromString(uuidStr), reliabilitySec.getInt(uuidStr));
                     }
                 }
-                Guild guild = new Guild(name, level, points, currency, members, reliability);
+                Guild guild = new Guild(name, level, points, currency, members, reliability, chatMuted, rules);
                 guilds.put(name.toLowerCase(), guild);
             }
         }
@@ -90,6 +92,8 @@ public class GuildManager {
             dataConfig.set(base + ".level", guild.getLevel());
             dataConfig.set(base + ".points", guild.getGuildPoints());
             dataConfig.set(base + ".currency", guild.getGuildCurrency());
+            dataConfig.set(base + ".chatMuted", guild.isChatMuted());
+            dataConfig.set(base + ".rules", guild.getRules());
             for (Map.Entry<UUID, Integer> entry : guild.getMembers().entrySet()) {
                 dataConfig.set(base + ".members." + entry.getKey().toString(), entry.getValue());
             }
@@ -200,7 +204,7 @@ public class GuildManager {
         members.put(player.getUniqueId(), 5);
         Map<UUID, Integer> reliability = new HashMap<>();
         reliability.put(player.getUniqueId(), getStartReliability());
-        Guild guild = new Guild(name, 1, 0, 0, members, reliability);
+        Guild guild = new Guild(name, 1, 0, 0, members, reliability, false, new ArrayList<>());
         guilds.put(name.toLowerCase(), guild);
         memberGuild.put(player.getUniqueId(), name.toLowerCase());
         save();
@@ -344,6 +348,10 @@ public class GuildManager {
             messages.sendRaw(player, "&cVault экономика не найдена.");
             return;
         }
+        if (!hasGuildPermission(player.getUniqueId(), "manageBank")) {
+            messages.send(player, "errors.guild-no-permission");
+            return;
+        }
         String name = memberGuild.get(player.getUniqueId());
         if (name == null) {
             messages.send(player, "errors.guild-not-found");
@@ -478,7 +486,142 @@ public class GuildManager {
         return economy;
     }
 
+    public boolean hasGuildPermission(UUID uuid, String permission) {
+        String name = memberGuild.get(uuid);
+        if (name == null) {
+            return false;
+        }
+        Guild guild = guilds.get(name);
+        if (guild == null) {
+            return false;
+        }
+        int rankId = guild.getMembers().getOrDefault(uuid, 1);
+        List<String> perms = configManager.getGuilds().getStringList("ranks." + rankId + ".permissions");
+        return perms.contains("*") || perms.contains(permission);
+    }
+
+    public void promote(Player sender, Player target) {
+        if (!hasGuildPermission(sender.getUniqueId(), "promote")) {
+            messages.send(sender, "errors.guild-no-permission");
+            return;
+        }
+        String name = memberGuild.get(sender.getUniqueId());
+        if (name == null || !name.equalsIgnoreCase(memberGuild.get(target.getUniqueId()))) {
+            messages.send(sender, "errors.guild-not-found");
+            return;
+        }
+        Guild guild = guilds.get(name);
+        int current = guild.getMembers().getOrDefault(target.getUniqueId(), 1);
+        guild.getMembers().put(target.getUniqueId(), Math.min(5, current + 1));
+        save();
+        messages.sendRaw(sender, "&aИгрок повышен.");
+        messages.sendRaw(target, "&aВас повысили в гильдии.");
+    }
+
+    public void demote(Player sender, Player target) {
+        if (!hasGuildPermission(sender.getUniqueId(), "demote")) {
+            messages.send(sender, "errors.guild-no-permission");
+            return;
+        }
+        String name = memberGuild.get(sender.getUniqueId());
+        if (name == null || !name.equalsIgnoreCase(memberGuild.get(target.getUniqueId()))) {
+            messages.send(sender, "errors.guild-not-found");
+            return;
+        }
+        Guild guild = guilds.get(name);
+        int current = guild.getMembers().getOrDefault(target.getUniqueId(), 1);
+        guild.getMembers().put(target.getUniqueId(), Math.max(1, current - 1));
+        save();
+        messages.sendRaw(sender, "&eИгрок понижен.");
+        messages.sendRaw(target, "&cВас понизили в гильдии.");
+    }
+
+    public void toggleGuildChatMute(Player sender) {
+        if (!hasGuildPermission(sender.getUniqueId(), "muteChat")) {
+            messages.send(sender, "errors.guild-no-permission");
+            return;
+        }
+        String name = memberGuild.get(sender.getUniqueId());
+        if (name == null) {
+            messages.send(sender, "errors.guild-not-found");
+            return;
+        }
+        Guild guild = guilds.get(name);
+        if (guild == null) {
+            messages.send(sender, "errors.guild-not-found");
+            return;
+        }
+        guild.setChatMuted(!guild.isChatMuted());
+        save();
+        messages.send(sender, "info.guild-chat-muted", "{state}", guild.isChatMuted() ? "&cON" : "&aOFF");
+    }
+
+    public void setRules(Player sender, List<String> rules) {
+        if (!hasGuildPermission(sender.getUniqueId(), "manageRules")) {
+            messages.send(sender, "errors.guild-no-permission");
+            return;
+        }
+        String name = memberGuild.get(sender.getUniqueId());
+        if (name == null) {
+            messages.send(sender, "errors.guild-not-found");
+            return;
+        }
+        Guild guild = guilds.get(name);
+        if (guild == null) {
+            messages.send(sender, "errors.guild-not-found");
+            return;
+        }
+        guild.setRules(rules);
+        save();
+        messages.send(sender, "info.guild-rules-updated");
+    }
+
+    public void sendRules(Player player) {
+        String name = memberGuild.get(player.getUniqueId());
+        if (name == null) {
+            messages.send(player, "errors.guild-not-found");
+            return;
+        }
+        Guild guild = guilds.get(name);
+        if (guild == null) {
+            messages.send(player, "errors.guild-not-found");
+            return;
+        }
+        messages.sendRaw(player, messages.get("info.guild-rules-header"));
+        List<String> rules = guild.getRules();
+        if (rules == null || rules.isEmpty()) {
+            messages.sendRaw(player, "&7(Правила не заданы)");
+            return;
+        }
+        for (String rule : rules) {
+            messages.sendRaw(player, rule);
+        }
+    }
+
+    public void sendReliability(Player player) {
+        int reliability = getReliability(player.getUniqueId());
+        messages.send(player, "info.guild-reliability", "{value}", String.valueOf(reliability));
+    }
+
     public boolean isFeatureEnabled() {
         return configManager.isFeatureEnabled("guilds");
+    }
+
+    public boolean canSpeakGuildChat(Player player) {
+        String name = memberGuild.get(player.getUniqueId());
+        if (name == null) {
+            messages.send(player, "errors.guild-not-found");
+            return false;
+        }
+        Guild guild = guilds.get(name);
+        if (guild == null) {
+            messages.send(player, "errors.guild-not-found");
+            return false;
+        }
+        if (guild.isChatMuted() && !hasGuildPermission(player.getUniqueId(), "muteChat")) {
+            messages.send(player, "errors.guild-chat-muted");
+            return false;
+        }
+        return true;
     }
 }
