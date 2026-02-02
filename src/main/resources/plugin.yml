@@ -18,9 +18,6 @@ commands:
     usage: /changepass <old> <new> <new>
   logout:
     description: Logout from session
-  chat:
-    description: Switch chat channel
-    usage: /chat <global|local|guild>
   broadcast:
     description: Manage broadcasts
   g:

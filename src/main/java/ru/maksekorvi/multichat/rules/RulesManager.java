@@ -26,4 +26,8 @@ public class RulesManager {
     public String getHeader(int page, int max) {
         return messages.format("info.rules-header", "{page}", String.valueOf(page), "{max}", String.valueOf(max));
     }
+
+    public boolean isFeatureEnabled() {
+        return configManager.isFeatureEnabled("rules");
+    }
 }

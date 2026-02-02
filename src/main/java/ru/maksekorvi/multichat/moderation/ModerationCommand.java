@@ -27,6 +27,10 @@ public class ModerationCommand implements CommandExecutor {
             messages.send(sender, "errors.no-permission");
             return true;
         }
+        if (!moderationManager.isFeatureEnabled()) {
+            messages.send(sender, "errors.feature-disabled");
+            return true;
+        }
         switch (name) {
             case "ban":
                 return handleBan(sender, args, 0);

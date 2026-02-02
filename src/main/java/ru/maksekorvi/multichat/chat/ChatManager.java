@@ -50,7 +50,7 @@ public class ChatManager {
     public String formatMessage(Player player, ChatChannel channel, String message) {
         String format = configManager.getChat().getString("channels." + channel.getId() + ".format", "{player}: {message}");
         String guild = guildManager.getGuildName(player.getUniqueId());
-        String guildTag = guild == null ? "" : "&7[&a" + guild + "&7]&r";
+        String guildTag = guild == null ? "&7(Не в гильдии)&r" : "&7[&a" + guild + "&7]&r";
         String prefix = getPrefix(player);
         String result = format
             .replace("{guild}", guildTag)
@@ -105,5 +105,9 @@ public class ChatManager {
 
     public GuildManager getGuildManager() {
         return guildManager;
+    }
+
+    public boolean isChatEnabled() {
+        return configManager.isFeatureEnabled("chat");
     }
 }

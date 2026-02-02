@@ -60,6 +60,6 @@ public class MultiChatExpansion extends PlaceholderExpansion {
     }
 
     private String defaultValue(String value) {
-        return value == null || value.isEmpty() ? "-" : value;
+        return value == null || value.isEmpty() ? "Не в гильдии" : value;
     }
 }

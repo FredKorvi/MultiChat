@@ -89,4 +89,8 @@ public class ConfigManager {
     public FileConfiguration getRules() {
         return rules;
     }
+
+    public boolean isFeatureEnabled(String feature) {
+        return config.getBoolean("settings.features." + feature, true);
+    }
 }

@@ -10,7 +10,6 @@ import ru.maksekorvi.multichat.auth.AuthListener;
 import ru.maksekorvi.multichat.auth.AuthManager;
 import ru.maksekorvi.multichat.broadcast.BroadcastCommand;
 import ru.maksekorvi.multichat.broadcast.BroadcastManager;
-import ru.maksekorvi.multichat.chat.ChatCommand;
 import ru.maksekorvi.multichat.chat.ChatListener;
 import ru.maksekorvi.multichat.chat.ChatManager;
 import ru.maksekorvi.multichat.config.ConfigManager;
@@ -78,9 +77,8 @@ public class MultiChatPlugin extends JavaPlugin {
         register(getCommand("login"), authManager.getLoginCommand());
         register(getCommand("changepass"), authManager.getChangePasswordCommand());
         register(getCommand("logout"), authManager.getLogoutCommand());
-        register(getCommand("chat"), new ChatCommand(chatManager, messageService));
         register(getCommand("broadcast"), new BroadcastCommand(broadcastManager, messageService));
-        register(getCommand("g"), new GuildCommand(guildManager, messageService));
+        register(getCommand("g"), new GuildCommand(guildManager, chatManager, messageService));
         register(getCommand("rules"), new RulesCommand(rulesManager, messageService));
         register(getCommand("multichat"), new RootCommand(this, configManager, messageService));
         ModerationCommand moderationCommand = new ModerationCommand(moderationManager, messageService);

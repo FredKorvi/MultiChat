@@ -173,4 +173,8 @@ public class ModerationManager {
     public String getDefaultWarnReason() {
         return configManager.getModeration().getString("moderation.defaultWarnReason", "Предупреждение");
     }
+
+    public boolean isFeatureEnabled() {
+        return configManager.isFeatureEnabled("moderation");
+    }
 }

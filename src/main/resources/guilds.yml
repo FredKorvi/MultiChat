@@ -1,6 +1,9 @@
 settings:
   maxGuilds: 100
   bankCurrencyName: "золотые пенни"
+  reliability:
+    start: 100
+    refusePenalty: 10
   bonus:
     min: 1
     max: 500

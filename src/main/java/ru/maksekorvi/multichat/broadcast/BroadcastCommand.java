@@ -22,6 +22,10 @@ public class BroadcastCommand implements CommandExecutor {
             messages.send(sender, "errors.no-permission");
             return true;
         }
+        if (!manager.isFeatureEnabled()) {
+            messages.send(sender, "errors.feature-disabled");
+            return true;
+        }
         if (args.length == 0) {
             messages.sendRaw(sender, "&e/broadcast on|off|interval|list|add|remove|reload");
             return true;

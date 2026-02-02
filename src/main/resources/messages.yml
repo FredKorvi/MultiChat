@@ -13,9 +13,14 @@ errors:
   broadcast-disabled: "&cБроадкасты отключены."
   guild-not-found: "&cГильдия не найдена."
   guild-no-permission: "&cНедостаточно прав гильдии."
+  feature-disabled: "&cЭтот функционал отключен на сервере."
   moderation-banned: "&cВы забанены: {reason}"
   moderation-muted: "&cВы замучены: {reason}"
   moderation-frozen: "&cВы заморожены."
+auth:
+  title: "&6Авторизация"
+  register: "&eПожалуйста, зарегистрируйтесь: &6/register <пароль> <пароль>"
+  login: "&eПожалуйста, авторизуйтесь: &6/login <пароль>"
 info:
   register-success: "&aРегистрация успешна!"
   login-success: "&aАвторизация успешна!"
@@ -33,5 +38,8 @@ info:
   guild-joined: "&aВы вступили в гильдию {guild}."
   guild-left: "&eВы покинули гильдию."
   guild-chat-toggle: "&eГильдейский чат: {state}"
+  guild-quest-take: "&aВы взяли гильдейский квест."
+  guild-quest-refuse: "&cВы отказались от квеста. Надежность снижена."
+  guild-reliability: "&eНадежность: {value}"
   moderation-kick: "&cВас кикнули: {reason}"
   moderation-warn: "&eВы получили предупреждение: {reason}"

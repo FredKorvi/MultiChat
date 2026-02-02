@@ -5,16 +5,20 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import ru.maksekorvi.multichat.chat.ChatChannel;
+import ru.maksekorvi.multichat.chat.ChatManager;
 import ru.maksekorvi.multichat.util.MessageService;
 
 import java.util.List;
 
 public class GuildCommand implements CommandExecutor {
     private final GuildManager guildManager;
+    private final ChatManager chatManager;
     private final MessageService messages;
 
-    public GuildCommand(GuildManager guildManager, MessageService messages) {
+    public GuildCommand(GuildManager guildManager, ChatManager chatManager, MessageService messages) {
         this.guildManager = guildManager;
+        this.chatManager = chatManager;
         this.messages = messages;
     }
 
@@ -25,14 +29,18 @@ public class GuildCommand implements CommandExecutor {
             return true;
         }
         Player player = (Player) sender;
+        if (!guildManager.isFeatureEnabled()) {
+            messages.send(player, "errors.feature-disabled");
+            return true;
+        }
         if (args.length == 0) {
-            messages.sendRaw(player, "&e/g create|disband|invite|accept|kick|leave|info|top|bank|bonus");
+            messages.sendRaw(player, "&6Гильдии: &e/g create|disband|invite|accept|kick|leave|info|top|bank|bonus|chat|takequest|refusequest");
             return true;
         }
         switch (args[0].toLowerCase()) {
             case "create":
                 if (args.length < 2) {
-                    messages.sendRaw(player, "&cИспользование: /g create <name>");
+                    messages.sendRaw(player, "&cИспользование: &e/g create <name>");
                     return true;
                 }
                 guildManager.createGuild(player, args[1]);
@@ -42,7 +50,7 @@ public class GuildCommand implements CommandExecutor {
                 return true;
             case "invite":
                 if (args.length < 2) {
-                    messages.sendRaw(player, "&cИспользование: /g invite <player>");
+                    messages.sendRaw(player, "&cИспользование: &e/g invite <player>");
                     return true;
                 }
                 Player target = Bukkit.getPlayer(args[1]);
@@ -54,14 +62,14 @@ public class GuildCommand implements CommandExecutor {
                 return true;
             case "accept":
                 if (args.length < 2) {
-                    messages.sendRaw(player, "&cИспользование: /g accept <guild>");
+                    messages.sendRaw(player, "&cИспользование: &e/g accept <guild>");
                     return true;
                 }
                 guildManager.acceptInvite(player, args[1]);
                 return true;
             case "kick":
                 if (args.length < 2) {
-                    messages.sendRaw(player, "&cИспользование: /g kick <player>");
+                    messages.sendRaw(player, "&cИспользование: &e/g kick <player>");
                     return true;
                 }
                 Player kickTarget = Bukkit.getPlayer(args[1]);
@@ -95,7 +103,7 @@ public class GuildCommand implements CommandExecutor {
                 return true;
             case "bank":
                 if (args.length < 2) {
-                    messages.sendRaw(player, "&cИспользование: /g bank balance|deposit|withdraw <amount>");
+                    messages.sendRaw(player, "&cИспользование: &e/g bank balance|deposit|withdraw <amount>");
                     return true;
                 }
                 if (args[1].equalsIgnoreCase("balance")) {
@@ -103,7 +111,7 @@ public class GuildCommand implements CommandExecutor {
                     return true;
                 }
                 if (args.length < 3) {
-                    messages.sendRaw(player, "&cИспользование: /g bank deposit|withdraw <amount>");
+                    messages.sendRaw(player, "&cИспользование: &e/g bank deposit|withdraw <amount>");
                     return true;
                 }
                 double amount = Double.parseDouble(args[2]);
@@ -115,7 +123,7 @@ public class GuildCommand implements CommandExecutor {
                 return true;
             case "bonus":
                 if (args.length < 3) {
-                    messages.sendRaw(player, "&cИспользование: /g bonus <player> <amount>");
+                    messages.sendRaw(player, "&cИспользование: &e/g bonus <player> <amount>");
                     return true;
                 }
                 Player bonusTarget = Bukkit.getPlayer(args[1]);
@@ -126,8 +134,22 @@ public class GuildCommand implements CommandExecutor {
                 int bonus = Integer.parseInt(args[2]);
                 guildManager.bonus(player, bonusTarget, bonus);
                 return true;
+            case "chat":
+                guildManager.toggleGuildChat(player);
+                if (guildManager.isGuildChatEnabled(player.getUniqueId())) {
+                    chatManager.setChannel(player, ChatChannel.GUILD);
+                } else {
+                    chatManager.setChannel(player, ChatChannel.LOCAL);
+                }
+                return true;
+            case "takequest":
+                guildManager.takeQuest(player);
+                return true;
+            case "refusequest":
+                guildManager.refuseQuest(player);
+                return true;
             default:
-                messages.sendRaw(player, "&e/g create|disband|invite|accept|kick|leave|info|top|bank|bonus");
+                messages.sendRaw(player, "&6Гильдии: &e/g create|disband|invite|accept|kick|leave|info|top|bank|bonus|chat|takequest|refusequest");
                 return true;
         }
     }

@@ -22,6 +22,10 @@ public class LoginCommand implements CommandExecutor {
             return true;
         }
         Player player = (Player) sender;
+        if (!authManager.isAuthEnabled()) {
+            messages.send(player, "errors.feature-disabled");
+            return true;
+        }
         if (!player.hasPermission("multichat.auth.login")) {
             messages.send(player, "errors.no-permission");
             return true;

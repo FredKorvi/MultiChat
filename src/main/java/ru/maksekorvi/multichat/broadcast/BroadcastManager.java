@@ -27,6 +27,9 @@ public class BroadcastManager {
 
     public void start() {
         stop();
+        if (!configManager.isFeatureEnabled("broadcasts")) {
+            return;
+        }
         FileConfiguration cfg = configManager.getBroadcast();
         if (!cfg.getBoolean("broadcast.enabled", true)) {
             return;
@@ -94,5 +97,9 @@ public class BroadcastManager {
         FileConfiguration cfg = configManager.getBroadcast();
         cfg.set("broadcast.intervalSeconds", seconds);
         configManager.save("broadcast.yml", cfg);
+    }
+
+    public boolean isFeatureEnabled() {
+        return configManager.isFeatureEnabled("broadcasts");
     }
 }

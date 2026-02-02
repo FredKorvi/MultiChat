@@ -14,6 +14,8 @@ import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import ru.maksekorvi.multichat.util.MessageService;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import java.util.List;
 
@@ -29,6 +31,7 @@ public class AuthListener implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         authManager.loadPlayer(event.getPlayer());
+        applyAuthEffects(event.getPlayer());
     }
 
     @EventHandler
@@ -39,6 +42,7 @@ public class AuthListener implements Listener {
     @EventHandler
     public void onMove(PlayerMoveEvent event) {
         if (shouldBlock(event.getPlayer())) {
+            applyAuthEffects(event.getPlayer());
             if (event.getFrom().getX() != event.getTo().getX() || event.getFrom().getZ() != event.getTo().getZ()) {
                 event.setTo(event.getFrom());
             }
@@ -49,7 +53,8 @@ public class AuthListener implements Listener {
     public void onChat(AsyncPlayerChatEvent event) {
         if (shouldBlock(event.getPlayer())) {
             event.setCancelled(true);
-            messages.send(event.getPlayer(), "errors.auth-required");
+            authManager.sendAuthPrompt(event.getPlayer());
+            applyAuthEffects(event.getPlayer());
         }
     }
 
@@ -62,7 +67,8 @@ public class AuthListener implements Listener {
             boolean allowed = whitelist.stream().anyMatch(cmd::startsWith);
             if (!allowed) {
                 event.setCancelled(true);
-                messages.send(player, "errors.auth-required");
+                authManager.sendAuthPrompt(player);
+                applyAuthEffects(player);
             }
         }
     }
@@ -70,6 +76,7 @@ public class AuthListener implements Listener {
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
         if (shouldBlock(event.getPlayer())) {
+            applyAuthEffects(event.getPlayer());
             event.setCancelled(true);
         }
     }
@@ -77,6 +84,7 @@ public class AuthListener implements Listener {
     @EventHandler
     public void onDrop(PlayerDropItemEvent event) {
         if (shouldBlock(event.getPlayer())) {
+            applyAuthEffects(event.getPlayer());
             event.setCancelled(true);
         }
     }
@@ -84,6 +92,7 @@ public class AuthListener implements Listener {
     @EventHandler
     public void onPickup(PlayerPickupItemEvent event) {
         if (shouldBlock(event.getPlayer())) {
+            applyAuthEffects(event.getPlayer());
             event.setCancelled(true);
         }
     }
@@ -91,6 +100,7 @@ public class AuthListener implements Listener {
     @EventHandler
     public void onBreak(BlockBreakEvent event) {
         if (shouldBlock(event.getPlayer())) {
+            applyAuthEffects(event.getPlayer());
             event.setCancelled(true);
         }
     }
@@ -107,15 +117,30 @@ public class AuthListener implements Listener {
         if (event.getEntity() instanceof Player) {
             Player player = (Player) event.getEntity();
             if (shouldBlock(player)) {
+                applyAuthEffects(player);
                 event.setCancelled(true);
             }
         }
     }
 
     private boolean shouldBlock(Player player) {
+        if (!authManager.isAuthEnabled()) {
+            return false;
+        }
         if (authManager.isLoading(player.getUniqueId())) {
             return true;
         }
         return !authManager.isAuthenticated(player);
+    }
+
+    private void applyAuthEffects(Player player) {
+        if (!authManager.isAuthEnabled()) {
+            return;
+        }
+        player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 60, 1, false, false));
+        String title = messages.get("auth.title");
+        if (!title.isEmpty()) {
+            player.sendTitle(MessageService.colorize(title), "", 0, 40, 10);
+        }
     }
 }

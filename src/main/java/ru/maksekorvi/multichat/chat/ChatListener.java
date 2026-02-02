@@ -37,9 +37,14 @@ public class ChatListener implements Listener {
     @EventHandler
     public void onChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
+        if (!chatManager.isChatEnabled()) {
+            event.setCancelled(true);
+            messages.send(player, "errors.feature-disabled");
+            return;
+        }
         if (!authManager.isAuthenticated(player)) {
             event.setCancelled(true);
-            messages.send(player, "errors.auth-required");
+            authManager.sendAuthPrompt(player);
             return;
         }
         String message = event.getMessage();
@@ -48,6 +53,9 @@ public class ChatListener implements Listener {
         if (message.startsWith(prefix)) {
             channel = ChatChannel.GLOBAL;
             message = message.substring(prefix.length()).trim();
+        }
+        if (chatManager.getGuildManager().isGuildChatEnabled(player.getUniqueId())) {
+            channel = ChatChannel.GUILD;
         }
         if (message.isEmpty()) {
             event.setCancelled(true);

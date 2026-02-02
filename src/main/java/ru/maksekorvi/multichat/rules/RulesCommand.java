@@ -18,6 +18,10 @@ public class RulesCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!rulesManager.isFeatureEnabled()) {
+            messages.send(sender, "errors.feature-disabled");
+            return true;
+        }
         List<String> rules = rulesManager.getRules();
         int pageSize = rulesManager.getPageSize();
         int maxPage = Math.max(1, (int) Math.ceil((double) rules.size() / pageSize));

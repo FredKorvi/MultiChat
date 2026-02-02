@@ -58,10 +58,10 @@ public class AuthManager {
                     authStates.put(player.getUniqueId(), new AuthState(finalRegistered, finalSessionValid));
                     loading.remove(player.getUniqueId());
                     if (finalRegistered && !finalSessionValid) {
-                        messages.send(player, "errors.auth-required");
+                        sendAuthPrompt(player);
                     }
                     if (!finalRegistered) {
-                        messages.sendRaw(player, messages.format("errors.not-registered"));
+                        sendAuthPrompt(player);
                     }
                 });
             } catch (SQLException e) {
@@ -87,6 +87,10 @@ public class AuthManager {
     public boolean isRegistered(Player player) {
         AuthState state = authStates.get(player.getUniqueId());
         return state != null && state.isRegistered();
+    }
+
+    public boolean isAuthEnabled() {
+        return configManager.isFeatureEnabled("auth");
     }
 
     public void register(Player player, String password) {
@@ -205,6 +209,14 @@ public class AuthManager {
 
     public java.util.List<String> getCommandWhitelist() {
         return configManager.getConfig().getStringList("settings.auth.commandWhitelist");
+    }
+
+    public void sendAuthPrompt(Player player) {
+        if (!isRegistered(player)) {
+            messages.sendRaw(player, messages.get("auth.register"));
+        } else {
+            messages.sendRaw(player, messages.get("auth.login"));
+        }
     }
 
     private String getIp(Player player) {

@@ -2,6 +2,13 @@ settings:
   locale: "ru_RU"
   database:
     file: "multichat.db"
+  features:
+    auth: true
+    chat: true
+    guilds: true
+    broadcasts: true
+    moderation: true
+    rules: true
   auth:
     sessionMinutes: 60
     commandWhitelist:
