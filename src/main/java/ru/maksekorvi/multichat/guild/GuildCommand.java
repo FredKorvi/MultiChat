@@ -7,6 +7,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import ru.maksekorvi.multichat.chat.ChatChannel;
 import ru.maksekorvi.multichat.chat.ChatManager;
+import ru.maksekorvi.multichat.quest.QuestManager;
 import ru.maksekorvi.multichat.util.MessageService;
 
 import java.util.List;
@@ -14,11 +15,13 @@ import java.util.List;
 public class GuildCommand implements CommandExecutor {
     private final GuildManager guildManager;
     private final ChatManager chatManager;
+    private final QuestManager questManager;
     private final MessageService messages;
 
-    public GuildCommand(GuildManager guildManager, ChatManager chatManager, MessageService messages) {
+    public GuildCommand(GuildManager guildManager, ChatManager chatManager, QuestManager questManager, MessageService messages) {
         this.guildManager = guildManager;
         this.chatManager = chatManager;
+        this.questManager = questManager;
         this.messages = messages;
     }
 
@@ -34,7 +37,7 @@ public class GuildCommand implements CommandExecutor {
             return true;
         }
         if (args.length == 0) {
-            messages.sendRaw(player, "&6Гильдии: &e/g create|disband|invite|accept|kick|leave|info|top|bank|bonus|chat|takequest|refusequest");
+            messages.sendRaw(player, "&6Гильдии: &e/g create|disband|invite|accept|kick|leave|info|top|bank|bonus|chat|quest|takequest|refusequest");
             return true;
         }
         switch (args[0].toLowerCase()) {
@@ -143,13 +146,28 @@ public class GuildCommand implements CommandExecutor {
                 }
                 return true;
             case "takequest":
-                guildManager.takeQuest(player);
+                questManager.takeQuest(player);
                 return true;
             case "refusequest":
-                guildManager.refuseQuest(player);
+                questManager.refuseQuest(player);
+                return true;
+            case "quest":
+                if (args.length < 2) {
+                    messages.sendRaw(player, "&cИспользование: &e/g quest info|progress");
+                    return true;
+                }
+                if (args[1].equalsIgnoreCase("info")) {
+                    questManager.sendQuestInfo(player);
+                    return true;
+                }
+                if (args[1].equalsIgnoreCase("progress")) {
+                    questManager.sendQuestProgress(player);
+                    return true;
+                }
+                messages.sendRaw(player, "&cИспользование: &e/g quest info|progress");
                 return true;
             default:
-                messages.sendRaw(player, "&6Гильдии: &e/g create|disband|invite|accept|kick|leave|info|top|bank|bonus|chat|takequest|refusequest");
+                messages.sendRaw(player, "&6Гильдии: &e/g create|disband|invite|accept|kick|leave|info|top|bank|bonus|chat|quest|takequest|refusequest");
                 return true;
         }
     }

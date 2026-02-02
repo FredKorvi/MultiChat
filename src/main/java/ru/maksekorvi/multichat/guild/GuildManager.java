@@ -23,7 +23,6 @@ public class GuildManager {
     private final Map<String, Guild> guilds = new ConcurrentHashMap<>();
     private final Map<UUID, String> memberGuild = new ConcurrentHashMap<>();
     private final Map<UUID, String> invites = new ConcurrentHashMap<>();
-    private final Map<UUID, Boolean> activeQuest = new ConcurrentHashMap<>();
     private final Set<UUID> guildChat = ConcurrentHashMap.newKeySet();
     private File dataFile;
     private FileConfiguration dataConfig;
@@ -411,36 +410,6 @@ public class GuildManager {
         return guildChat.contains(uuid);
     }
 
-    public void takeQuest(Player player) {
-        if (!hasGuild(player.getUniqueId())) {
-            messages.send(player, "errors.guild-not-found");
-            return;
-        }
-        if (activeQuest.getOrDefault(player.getUniqueId(), false)) {
-            messages.sendRaw(player, "&cУ вас уже есть активный квест.");
-            return;
-        }
-        activeQuest.put(player.getUniqueId(), true);
-        messages.send(player, "info.guild-quest-take");
-    }
-
-    public void refuseQuest(Player player) {
-        if (!hasGuild(player.getUniqueId())) {
-            messages.send(player, "errors.guild-not-found");
-            return;
-        }
-        if (!activeQuest.getOrDefault(player.getUniqueId(), false)) {
-            messages.sendRaw(player, "&cУ вас нет активного квеста.");
-            return;
-        }
-        activeQuest.put(player.getUniqueId(), false);
-        int reliability = Math.max(0, getReliability(player.getUniqueId()) - getRefusePenalty());
-        setReliability(player.getUniqueId(), reliability);
-        save();
-        messages.send(player, "info.guild-quest-refuse");
-        messages.send(player, "info.guild-reliability", "{value}", String.valueOf(reliability));
-    }
-
     public int getReliability(UUID uuid) {
         String name = memberGuild.get(uuid);
         if (name == null) {
@@ -469,8 +438,40 @@ public class GuildManager {
         return configManager.getGuilds().getInt("settings.reliability.start", 100);
     }
 
-    private int getRefusePenalty() {
+    public int getRefusePenalty() {
         return configManager.getGuilds().getInt("settings.reliability.refusePenalty", 10);
+    }
+
+    public void adjustReliability(UUID uuid, int delta) {
+        int reliability = Math.max(0, getReliability(uuid) + delta);
+        setReliability(uuid, reliability);
+        save();
+    }
+
+    public void addGuildPoints(UUID uuid, int points) {
+        String name = memberGuild.get(uuid);
+        if (name == null) {
+            return;
+        }
+        Guild guild = guilds.get(name);
+        if (guild == null) {
+            return;
+        }
+        guild.setGuildPoints(guild.getGuildPoints() + points);
+        save();
+    }
+
+    public void addGuildCurrency(UUID uuid, double amount) {
+        String name = memberGuild.get(uuid);
+        if (name == null) {
+            return;
+        }
+        Guild guild = guilds.get(name);
+        if (guild == null) {
+            return;
+        }
+        guild.addGuildCurrency(amount);
+        save();
     }
 
     public Economy getEconomy() {

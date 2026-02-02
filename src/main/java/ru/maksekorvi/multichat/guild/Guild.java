@@ -32,6 +32,10 @@ public class Guild {
         return guildPoints;
     }
 
+    public void setGuildPoints(int guildPoints) {
+        this.guildPoints = guildPoints;
+    }
+
     public double getGuildCurrency() {
         return guildCurrency;
     }
