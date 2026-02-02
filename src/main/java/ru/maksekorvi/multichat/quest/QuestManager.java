@@ -20,6 +20,7 @@ public class QuestManager {
     private final GuildManager guildManager;
     private final Economy economy;
     private final Map<UUID, ActiveQuest> activeQuests = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> lastQuestTakenAt = new ConcurrentHashMap<>();
     private final List<QuestDefinition> definitions = new ArrayList<>();
     private final Random random = new Random();
 
@@ -63,8 +64,17 @@ public class QuestManager {
             messages.send(player, "errors.guild-not-found");
             return;
         }
+        if (!guildManager.canTakeQuest(player.getUniqueId())) {
+            messages.send(player, "errors.guild-reliability-low");
+            return;
+        }
         if (activeQuests.containsKey(player.getUniqueId())) {
             messages.sendRaw(player, "&cУ вас уже есть активный квест.");
+            return;
+        }
+        if (!isCooldownReady(player.getUniqueId())) {
+            long remaining = getCooldownRemaining(player.getUniqueId());
+            messages.send(player, "errors.guild-quest-cooldown", "{time}", formatMinutes(remaining));
             return;
         }
         QuestDefinition definition = getRandomQuest();
@@ -74,8 +84,13 @@ public class QuestManager {
         }
         ActiveQuest quest = new ActiveQuest(definition);
         activeQuests.put(player.getUniqueId(), quest);
+        lastQuestTakenAt.put(player.getUniqueId(), System.currentTimeMillis());
         sendQuestInfo(player, quest);
         messages.send(player, "info.guild-quest-take");
+    }
+
+    public void clearActiveQuest(Player player) {
+        activeQuests.remove(player.getUniqueId());
     }
 
     public void refuseQuest(Player player) {
@@ -96,6 +111,16 @@ public class QuestManager {
             return;
         }
         sendQuestInfo(player, quest);
+    }
+
+    public void sendQuestOverview(Player player) {
+        ActiveQuest quest = activeQuests.get(player.getUniqueId());
+        if (quest == null) {
+            messages.send(player, "errors.no-active-quest");
+            return;
+        }
+        sendQuestInfo(player, quest);
+        sendQuestProgress(player);
     }
 
     public void sendQuestInfo(Player player, ActiveQuest quest) {
@@ -148,8 +173,9 @@ public class QuestManager {
         if (def.getRewardGuildPoints() > 0) {
             guildManager.addGuildPoints(player.getUniqueId(), def.getRewardGuildPoints());
         }
-        if (def.getRewardGuildCurrency() > 0) {
-            guildManager.addGuildCurrency(player.getUniqueId(), def.getRewardGuildCurrency());
+        double guildCurrencyReward = guildManager.getGuildLevelCurrencyReward(player.getUniqueId(), def.getRewardMoney());
+        if (guildCurrencyReward > 0) {
+            guildManager.addGuildCurrency(player.getUniqueId(), guildCurrencyReward);
         }
         messages.sendRaw(player, messages.format("info.guild-quest-complete", "{quest}", getDescription(def)));
     }
@@ -172,5 +198,29 @@ public class QuestManager {
             default:
                 return def.getId();
         }
+    }
+
+    private boolean isCooldownReady(UUID uuid) {
+        long last = lastQuestTakenAt.getOrDefault(uuid, 0L);
+        long cooldownMinutes = guildManager.getQuestCooldownMinutes(uuid);
+        long cooldownMillis = cooldownMinutes * 60_000L;
+        return System.currentTimeMillis() - last >= cooldownMillis;
+    }
+
+    private long getCooldownRemaining(UUID uuid) {
+        long last = lastQuestTakenAt.getOrDefault(uuid, 0L);
+        long cooldownMinutes = guildManager.getQuestCooldownMinutes(uuid);
+        long cooldownMillis = cooldownMinutes * 60_000L;
+        long remainingMillis = Math.max(0, cooldownMillis - (System.currentTimeMillis() - last));
+        return remainingMillis / 60_000L;
+    }
+
+    private String formatMinutes(long minutes) {
+        if (minutes < 60) {
+            return minutes + "м";
+        }
+        long hours = minutes / 60;
+        long mins = minutes % 60;
+        return hours + "ч " + mins + "м";
     }
 }

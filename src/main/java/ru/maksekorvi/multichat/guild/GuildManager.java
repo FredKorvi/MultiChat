@@ -59,8 +59,19 @@ public class GuildManager {
                 int level = section.getInt(key + ".level", 1);
                 int points = section.getInt(key + ".points", 0);
                 double currency = section.getDouble(key + ".currency", 0);
-                boolean chatMuted = section.getBoolean(key + ".chatMuted", false);
+                Map<UUID, Long> reliabilityUpdatedAt = new HashMap<>();
+                ConfigurationSection reliabilityTimeSec = section.getConfigurationSection(key + ".reliabilityUpdatedAt");
+                if (reliabilityTimeSec != null) {
+                    for (String uuidStr : reliabilityTimeSec.getKeys(false)) {
+                        reliabilityUpdatedAt.put(UUID.fromString(uuidStr), reliabilityTimeSec.getLong(uuidStr));
+                    }
+                }
+                Set<UUID> mutedMembers = new HashSet<>();
+                for (String uuidStr : section.getStringList(key + ".mutedMembers")) {
+                    mutedMembers.add(UUID.fromString(uuidStr));
+                }
                 List<String> rules = section.getStringList(key + ".rules");
+                String motd = section.getString(key + ".motd", "");
                 Map<UUID, Integer> members = new HashMap<>();
                 Map<UUID, Integer> reliability = new HashMap<>();
                 ConfigurationSection membersSec = section.getConfigurationSection(key + ".members");
@@ -78,7 +89,7 @@ public class GuildManager {
                         reliability.put(UUID.fromString(uuidStr), reliabilitySec.getInt(uuidStr));
                     }
                 }
-                Guild guild = new Guild(name, level, points, currency, members, reliability, chatMuted, rules);
+                Guild guild = new Guild(name, level, points, currency, members, reliability, reliabilityUpdatedAt, mutedMembers, rules, motd);
                 guilds.put(name.toLowerCase(), guild);
             }
         }
@@ -92,13 +103,21 @@ public class GuildManager {
             dataConfig.set(base + ".level", guild.getLevel());
             dataConfig.set(base + ".points", guild.getGuildPoints());
             dataConfig.set(base + ".currency", guild.getGuildCurrency());
-            dataConfig.set(base + ".chatMuted", guild.isChatMuted());
+            List<String> muted = new ArrayList<>();
+            for (UUID uuid : guild.getMutedMembers()) {
+                muted.add(uuid.toString());
+            }
+            dataConfig.set(base + ".mutedMembers", muted);
             dataConfig.set(base + ".rules", guild.getRules());
+            dataConfig.set(base + ".motd", guild.getMotd());
             for (Map.Entry<UUID, Integer> entry : guild.getMembers().entrySet()) {
                 dataConfig.set(base + ".members." + entry.getKey().toString(), entry.getValue());
             }
             for (Map.Entry<UUID, Integer> entry : guild.getReliability().entrySet()) {
                 dataConfig.set(base + ".reliability." + entry.getKey().toString(), entry.getValue());
+            }
+            for (Map.Entry<UUID, Long> entry : guild.getReliabilityUpdatedAt().entrySet()) {
+                dataConfig.set(base + ".reliabilityUpdatedAt." + entry.getKey().toString(), entry.getValue());
             }
         }
         try {
@@ -204,7 +223,10 @@ public class GuildManager {
         members.put(player.getUniqueId(), 5);
         Map<UUID, Integer> reliability = new HashMap<>();
         reliability.put(player.getUniqueId(), getStartReliability());
-        Guild guild = new Guild(name, 1, 0, 0, members, reliability, false, new ArrayList<>());
+        Map<UUID, Long> reliabilityUpdatedAt = new HashMap<>();
+        reliabilityUpdatedAt.put(player.getUniqueId(), System.currentTimeMillis());
+        Set<UUID> mutedMembers = new HashSet<>();
+        Guild guild = new Guild(name, 1, 0, 0, members, reliability, reliabilityUpdatedAt, mutedMembers, new ArrayList<>(), "");
         guilds.put(name.toLowerCase(), guild);
         memberGuild.put(player.getUniqueId(), name.toLowerCase());
         save();
@@ -263,6 +285,7 @@ public class GuildManager {
         }
         guild.getMembers().put(player.getUniqueId(), 1);
         guild.getReliability().put(player.getUniqueId(), getStartReliability());
+        guild.getReliabilityUpdatedAt().put(player.getUniqueId(), System.currentTimeMillis());
         memberGuild.put(player.getUniqueId(), invited);
         invites.remove(player.getUniqueId());
         save();
@@ -286,6 +309,8 @@ public class GuildManager {
         }
         guild.getMembers().remove(player.getUniqueId());
         guild.getReliability().remove(player.getUniqueId());
+        guild.getReliabilityUpdatedAt().remove(player.getUniqueId());
+        guild.getMutedMembers().remove(player.getUniqueId());
         memberGuild.remove(player.getUniqueId());
         save();
         messages.send(player, "info.guild-left");
@@ -312,6 +337,8 @@ public class GuildManager {
         }
         guild.getMembers().remove(target.getUniqueId());
         guild.getReliability().remove(target.getUniqueId());
+        guild.getReliabilityUpdatedAt().remove(target.getUniqueId());
+        guild.getMutedMembers().remove(target.getUniqueId());
         memberGuild.remove(target.getUniqueId());
         save();
         messages.sendRaw(player, "&aИгрок исключен.");
@@ -427,7 +454,15 @@ public class GuildManager {
         if (guild == null) {
             return 0;
         }
-        return guild.getReliability().getOrDefault(uuid, getStartReliability());
+        int base = guild.getReliability().getOrDefault(uuid, getStartReliability());
+        long updatedAt = guild.getReliabilityUpdatedAt().getOrDefault(uuid, System.currentTimeMillis());
+        int recovered = recoverReliability(base, updatedAt);
+        if (recovered != base) {
+            guild.getReliability().put(uuid, recovered);
+            guild.getReliabilityUpdatedAt().put(uuid, System.currentTimeMillis());
+            save();
+        }
+        return recovered;
     }
 
     private void setReliability(UUID uuid, int value) {
@@ -453,6 +488,7 @@ public class GuildManager {
     public void adjustReliability(UUID uuid, int delta) {
         int reliability = Math.max(0, getReliability(uuid) + delta);
         setReliability(uuid, reliability);
+        updateReliabilityTimestamp(uuid);
         save();
     }
 
@@ -536,26 +572,6 @@ public class GuildManager {
         messages.sendRaw(target, "&cВас понизили в гильдии.");
     }
 
-    public void toggleGuildChatMute(Player sender) {
-        if (!hasGuildPermission(sender.getUniqueId(), "muteChat")) {
-            messages.send(sender, "errors.guild-no-permission");
-            return;
-        }
-        String name = memberGuild.get(sender.getUniqueId());
-        if (name == null) {
-            messages.send(sender, "errors.guild-not-found");
-            return;
-        }
-        Guild guild = guilds.get(name);
-        if (guild == null) {
-            messages.send(sender, "errors.guild-not-found");
-            return;
-        }
-        guild.setChatMuted(!guild.isChatMuted());
-        save();
-        messages.send(sender, "info.guild-chat-muted", "{state}", guild.isChatMuted() ? "&cON" : "&aOFF");
-    }
-
     public void setRules(Player sender, List<String> rules) {
         if (!hasGuildPermission(sender.getUniqueId(), "manageRules")) {
             messages.send(sender, "errors.guild-no-permission");
@@ -603,6 +619,49 @@ public class GuildManager {
         messages.send(player, "info.guild-reliability", "{value}", String.valueOf(reliability));
     }
 
+    public void setMotd(Player sender, String motd) {
+        if (!hasGuildPermission(sender.getUniqueId(), "manageRules")) {
+            messages.send(sender, "errors.guild-no-permission");
+            return;
+        }
+        String name = memberGuild.get(sender.getUniqueId());
+        if (name == null) {
+            messages.send(sender, "errors.guild-not-found");
+            return;
+        }
+        Guild guild = guilds.get(name);
+        if (guild == null) {
+            messages.send(sender, "errors.guild-not-found");
+            return;
+        }
+        guild.setMotd(motd);
+        save();
+        messages.send(sender, "info.guild-motd-updated");
+    }
+
+    public void sendMotd(Player player) {
+        String name = memberGuild.get(player.getUniqueId());
+        if (name == null) {
+            messages.send(player, "errors.guild-not-found");
+            return;
+        }
+        Guild guild = guilds.get(name);
+        if (guild == null) {
+            messages.send(player, "errors.guild-not-found");
+            return;
+        }
+        String motd = guild.getMotd();
+        if (motd == null || motd.isEmpty()) {
+            messages.send(player, "info.guild-motd-empty");
+            return;
+        }
+        messages.send(player, "info.guild-motd", "{motd}", motd);
+    }
+
+    public void sendRawHint(Player player, String message) {
+        messages.sendRaw(player, message);
+    }
+
     public boolean isFeatureEnabled() {
         return configManager.isFeatureEnabled("guilds");
     }
@@ -618,10 +677,96 @@ public class GuildManager {
             messages.send(player, "errors.guild-not-found");
             return false;
         }
-        if (guild.isChatMuted() && !hasGuildPermission(player.getUniqueId(), "muteChat")) {
+        if (guild.getMutedMembers().contains(player.getUniqueId())) {
             messages.send(player, "errors.guild-chat-muted");
             return false;
         }
         return true;
+    }
+
+    public boolean isGuildChatMuted(UUID uuid) {
+        String name = memberGuild.get(uuid);
+        if (name == null) {
+            return false;
+        }
+        Guild guild = guilds.get(name);
+        if (guild == null) {
+            return false;
+        }
+        return guild.getMutedMembers().contains(uuid);
+    }
+
+    public void toggleMemberChatMute(Player sender, Player target) {
+        if (!hasGuildPermission(sender.getUniqueId(), "muteChat")) {
+            messages.send(sender, "errors.guild-no-permission");
+            return;
+        }
+        String name = memberGuild.get(sender.getUniqueId());
+        if (name == null || !name.equalsIgnoreCase(memberGuild.get(target.getUniqueId()))) {
+            messages.send(sender, "errors.guild-not-found");
+            return;
+        }
+        Guild guild = guilds.get(name);
+        if (guild == null) {
+            messages.send(sender, "errors.guild-not-found");
+            return;
+        }
+        if (guild.getMutedMembers().contains(target.getUniqueId())) {
+            guild.getMutedMembers().remove(target.getUniqueId());
+            messages.send(sender, "info.guild-chat-muted-member", "{player}", target.getName(), "{state}", "&aOFF");
+            messages.sendRaw(target, "&eВам снят мут чата гильдии.");
+        } else {
+            guild.getMutedMembers().add(target.getUniqueId());
+            messages.send(sender, "info.guild-chat-muted-member", "{player}", target.getName(), "{state}", "&cON");
+            messages.sendRaw(target, "&cВам выдан мут чата гильдии.");
+        }
+        save();
+    }
+
+    public boolean canTakeQuest(UUID uuid) {
+        return getReliability(uuid) > 0;
+    }
+
+    public long getQuestCooldownMinutes(UUID uuid) {
+        int reliability = getReliability(uuid);
+        if (reliability >= 100) {
+            return 120;
+        }
+        if (reliability >= 50) {
+            return 300;
+        }
+        return 300;
+    }
+
+    public double getGuildLevelCurrencyReward(UUID uuid, double baseReward) {
+        int level = getGuildLevel(uuid);
+        if (level >= 2) {
+            return baseReward;
+        }
+        return 0;
+    }
+
+    private void updateReliabilityTimestamp(UUID uuid) {
+        String name = memberGuild.get(uuid);
+        if (name == null) {
+            return;
+        }
+        Guild guild = guilds.get(name);
+        if (guild == null) {
+            return;
+        }
+        guild.getReliabilityUpdatedAt().put(uuid, System.currentTimeMillis());
+    }
+
+    private int recoverReliability(int current, long updatedAt) {
+        int max = getStartReliability();
+        if (current >= max) {
+            return current;
+        }
+        long elapsed = Math.max(0, System.currentTimeMillis() - updatedAt);
+        long total = 3L * 24 * 60 * 60 * 1000;
+        double ratio = Math.min(1.0, (double) elapsed / (double) total);
+        int recovered = current + (int) Math.round((max - current) * ratio);
+        return Math.min(max, recovered);
     }
 }

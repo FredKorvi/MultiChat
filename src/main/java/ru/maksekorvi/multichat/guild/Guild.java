@@ -10,19 +10,23 @@ public class Guild {
     private double guildCurrency;
     private final Map<UUID, Integer> members;
     private final Map<UUID, Integer> reliability;
-    private boolean chatMuted;
+    private final Map<UUID, Long> reliabilityUpdatedAt;
+    private final java.util.Set<UUID> mutedMembers;
     private java.util.List<String> rules;
+    private String motd;
 
     public Guild(String name, int level, int guildPoints, double guildCurrency, Map<UUID, Integer> members, Map<UUID, Integer> reliability,
-                 boolean chatMuted, java.util.List<String> rules) {
+                 Map<UUID, Long> reliabilityUpdatedAt, java.util.Set<UUID> mutedMembers, java.util.List<String> rules, String motd) {
         this.name = name;
         this.level = level;
         this.guildPoints = guildPoints;
         this.guildCurrency = guildCurrency;
         this.members = members;
         this.reliability = reliability;
-        this.chatMuted = chatMuted;
+        this.reliabilityUpdatedAt = reliabilityUpdatedAt;
+        this.mutedMembers = mutedMembers;
         this.rules = rules;
+        this.motd = motd;
     }
 
     public String getName() {
@@ -53,16 +57,16 @@ public class Guild {
         return reliability;
     }
 
+    public Map<UUID, Long> getReliabilityUpdatedAt() {
+        return reliabilityUpdatedAt;
+    }
+
+    public java.util.Set<UUID> getMutedMembers() {
+        return mutedMembers;
+    }
+
     public void addGuildCurrency(double amount) {
         guildCurrency += amount;
-    }
-
-    public boolean isChatMuted() {
-        return chatMuted;
-    }
-
-    public void setChatMuted(boolean chatMuted) {
-        this.chatMuted = chatMuted;
     }
 
     public java.util.List<String> getRules() {
@@ -71,5 +75,13 @@ public class Guild {
 
     public void setRules(java.util.List<String> rules) {
         this.rules = rules;
+    }
+
+    public String getMotd() {
+        return motd;
+    }
+
+    public void setMotd(String motd) {
+        this.motd = motd;
     }
 }

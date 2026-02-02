@@ -24,10 +24,11 @@ public class GuildMenu {
     public void open(Player player) {
         Inventory inv = Bukkit.createInventory(player, 27, ChatColor.GOLD + "Меню гильдии");
         inv.setItem(10, item(Material.BOOK_AND_QUILL, "&eПравила гильдии", "&7Посмотреть правила"));
+        inv.setItem(11, item(Material.SIGN, "&eMOTD гильдии", "&7Посмотреть сообщение дня"));
         inv.setItem(12, item(Material.COMPASS, "&eКвесты гильдии", "&7Текущий квест и прогресс"));
         inv.setItem(14, item(Material.ANVIL, "&eНадежность", "&7Показать вашу надежность"));
         inv.setItem(15, item(Material.BOOK, "&eЧат гильдии", "&7Вкл/выкл чат гильдии"));
-        inv.setItem(16, item(Material.INK_SACK, "&eМут чата гильдии", "&7Вкл/выкл мут чата"));
+        inv.setItem(16, item(Material.INK_SACK, "&eМут участника", "&7Используйте: /g mutechat <ник>"));
         player.openInventory(inv);
     }
 
@@ -47,9 +48,11 @@ public class GuildMenu {
             case 10:
                 guildManager.sendRules(player);
                 break;
+            case 11:
+                guildManager.sendMotd(player);
+                break;
             case 12:
-                questManager.sendQuestInfo(player);
-                questManager.sendQuestProgress(player);
+                questManager.sendQuestOverview(player);
                 break;
             case 14:
                 guildManager.sendReliability(player);
@@ -58,7 +61,7 @@ public class GuildMenu {
                 guildManager.toggleGuildChat(player);
                 break;
             case 16:
-                guildManager.toggleGuildChatMute(player);
+                guildManager.sendRawHint(player, "&eЧтобы замутить участника: &6/g mutechat <ник>");
                 break;
             default:
                 break;

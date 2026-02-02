@@ -40,7 +40,7 @@ public class GuildCommand implements CommandExecutor {
             return true;
         }
         if (args.length == 0) {
-            messages.sendRaw(player, "&6Гильдии: &e/g create|disband|invite|accept|kick|leave|info|top|bank|bonus|promote|demote|chat|mutechat|rules|reliability|quest|takequest|refusequest|menu");
+            guildMenu.open(player);
             return true;
         }
         switch (args[0].toLowerCase()) {
@@ -83,9 +83,11 @@ public class GuildCommand implements CommandExecutor {
                     messages.send(player, "errors.player-not-found");
                     return true;
                 }
+                questManager.clearActiveQuest(kickTarget);
                 guildManager.kick(player, kickTarget);
                 return true;
             case "leave":
+                questManager.clearActiveQuest(player);
                 guildManager.leave(player);
                 return true;
             case "info":
@@ -165,7 +167,16 @@ public class GuildCommand implements CommandExecutor {
                 guildManager.demote(player, demoteTarget);
                 return true;
             case "mutechat":
-                guildManager.toggleGuildChatMute(player);
+                if (args.length < 2) {
+                    messages.sendRaw(player, "&cИспользование: &e/g mutechat <player>");
+                    return true;
+                }
+                Player muteTarget = Bukkit.getPlayer(args[1]);
+                if (muteTarget == null) {
+                    messages.send(player, "errors.player-not-found");
+                    return true;
+                }
+                guildManager.toggleMemberChatMute(player, muteTarget);
                 return true;
             case "rules":
                 if (args.length < 2) {
@@ -194,11 +205,28 @@ public class GuildCommand implements CommandExecutor {
                 }
                 messages.sendRaw(player, "&cИспользование: &e/g rules view|set <text>");
                 return true;
+            case "motd":
+                if (args.length < 2) {
+                    messages.sendRaw(player, "&cИспользование: &e/g motd view|set <text>");
+                    return true;
+                }
+                if (args[1].equalsIgnoreCase("view")) {
+                    guildManager.sendMotd(player);
+                    return true;
+                }
+                if (args[1].equalsIgnoreCase("set")) {
+                    if (args.length < 3) {
+                        messages.sendRaw(player, "&cИспользование: &e/g motd set <text>");
+                        return true;
+                    }
+                    String motd = String.join(" ", java.util.Arrays.copyOfRange(args, 2, args.length));
+                    guildManager.setMotd(player, motd);
+                    return true;
+                }
+                messages.sendRaw(player, "&cИспользование: &e/g motd view|set <text>");
+                return true;
             case "reliability":
                 guildManager.sendReliability(player);
-                return true;
-            case "menu":
-                guildMenu.open(player);
                 return true;
             case "chat":
                 guildManager.toggleGuildChat(player);
@@ -230,7 +258,7 @@ public class GuildCommand implements CommandExecutor {
                 messages.sendRaw(player, "&cИспользование: &e/g quest info|progress");
                 return true;
             default:
-                messages.sendRaw(player, "&6Гильдии: &e/g create|disband|invite|accept|kick|leave|info|top|bank|bonus|promote|demote|chat|mutechat|rules|reliability|quest|takequest|refusequest|menu");
+                messages.sendRaw(player, "&6Гильдии: &e/g create|disband|invite|accept|kick|leave|info|top|bank|bonus|promote|demote|chat|mutechat|rules|motd|reliability|quest|takequest|refusequest");
                 return true;
         }
     }
