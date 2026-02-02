@@ -1,0 +1,20 @@
+settings:
+  locale: "ru_RU"
+  database:
+    file: "multichat.db"
+  auth:
+    sessionMinutes: 60
+    commandWhitelist:
+      - "/login"
+      - "/l"
+      - "/register"
+      - "/reg"
+      - "/rules"
+  chat:
+    defaultChannel: "local"
+    prefixGlobal: "!"
+  broadcast:
+    enabled: true
+  guilds:
+    maxNameLength: 16
+    minNameLength: 3
