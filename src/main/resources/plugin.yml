@@ -1,0 +1,99 @@
+name: MultiChat
+author: MakseKorvi
+version: 1.0.0
+main: ru.maksekorvi.multichat.MultiChatPlugin
+depend: [Vault]
+softdepend: [PlaceholderAPI, LuckPerms, Citizens]
+commands:
+  register:
+    aliases: [reg]
+    description: Register an account
+    usage: /register <password> <password>
+  login:
+    aliases: [l]
+    description: Login to your account
+    usage: /login <password>
+  changepass:
+    description: Change your password
+    usage: /changepass <old> <new> <new>
+  logout:
+    description: Logout from session
+  chat:
+    description: Switch chat channel
+    usage: /chat <global|local|guild>
+  broadcast:
+    description: Manage broadcasts
+  g:
+    aliases: [gildy]
+    description: Guild commands
+  rules:
+    description: View server rules
+  multichat:
+    description: MultiChat admin
+  ban:
+    description: Ban a player
+  unban:
+    description: Unban a player
+  tempban:
+    description: Tempban a player
+  ban-ip:
+    description: Ban an IP or player
+  mute:
+    description: Mute a player
+  unmute:
+    description: Unmute a player
+  freeze:
+    description: Freeze a player
+  unfreeze:
+    description: Unfreeze a player
+  kick:
+    description: Kick a player
+  warn:
+    description: Warn a player
+  unwarn:
+    description: Remove a warning
+permissions:
+  multichat.*:
+    default: op
+    children:
+      multichat.admin: true
+      multichat.auth.*: true
+      multichat.chat.*: true
+      multichat.guild.*: true
+      multichat.broadcast.*: true
+      multichat.mod.*: true
+  multichat.admin:
+    default: op
+  multichat.auth.*:
+    default: true
+    children:
+      multichat.auth.register: true
+      multichat.auth.login: true
+      multichat.auth.changepass: true
+      multichat.auth.logout: true
+  multichat.auth.register:
+    default: true
+  multichat.auth.login:
+    default: true
+  multichat.auth.changepass:
+    default: true
+  multichat.auth.logout:
+    default: true
+  multichat.chat.*:
+    default: true
+    children:
+      multichat.chat.global: true
+      multichat.chat.local: true
+      multichat.chat.guild: true
+  multichat.chat.global:
+    default: true
+  multichat.chat.local:
+    default: true
+  multichat.chat.guild:
+    default: true
+  multichat.guild.*:
+    default: true
+  multichat.broadcast.*:
+    default: op
+  multichat.mod.*:
+    default: op
