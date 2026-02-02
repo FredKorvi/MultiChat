@@ -1,0 +1,28 @@
+quests:
+  - id: "kill_zombie"
+    type: "KILL_MOB"
+    mob: "ZOMBIE"
+    amount: 10
+    baseReward:
+      money: 100
+      exp: 20
+      guildPoints: 10
+  - id: "mine_iron"
+    type: "MINE_BLOCK"
+    block: "IRON_ORE"
+    amount: 16
+    baseReward:
+      money: 80
+      exp: 15
+      guildPoints: 8
+  - id: "craft_bread"
+    type: "CRAFT_ITEM"
+    item: "BREAD"
+    amount: 8
+    baseReward:
+      money: 50
+      exp: 10
+      guildPoints: 5
+settings:
+  globalQuestIntervalMinutes: 120
+  assignToSingleMember: true

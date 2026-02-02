@@ -1,0 +1,9 @@
+auth:
+  block:
+    movement: true
+    interaction: true
+    chat: true
+    commands: true
+    damage: true
+  sessionMinutes: 60
+  maxRegisterAttempts: 3

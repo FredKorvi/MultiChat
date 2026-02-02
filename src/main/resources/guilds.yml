@@ -1,0 +1,46 @@
+settings:
+  maxGuilds: 100
+  bankCurrencyName: "золотые пенни"
+  reliability:
+    start: 100
+    refusePenalty: 10
+  bonus:
+    min: 1
+    max: 500
+  levels:
+    1:
+      questCooldownMinutes: 0
+      questRewards:
+        money: 50
+        exp: 10
+        guildPoints: 5
+    2:
+      questCooldownMinutes: 120
+      questRewards:
+        money: 75
+        exp: 20
+        guildPoints: 10
+      requiredCompletedQuests: 50
+    3:
+      questCooldownMinutes: 120
+      questRewards:
+        money: 100
+        exp: 35
+        guildPoints: 20
+      upgradeCostCurrency: 500
+ranks:
+  1:
+    name: "Ученик"
+    permissions: ["chat", "quests"]
+  2:
+    name: "Подмастерье"
+    permissions: ["chat", "quests", "invite"]
+  3:
+    name: "Мастер"
+    permissions: ["chat", "quests", "invite", "kick"]
+  4:
+    name: "Гилдмастер"
+    permissions: ["chat", "quests", "invite", "kick", "promote", "demote", "manageBank"]
+  5:
+    name: "Лидер"
+    permissions: ["*"]
