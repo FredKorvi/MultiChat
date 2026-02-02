@@ -24,6 +24,7 @@ public class AuthManager {
     private final MessageService messages;
     private final Map<UUID, AuthState> authStates = new ConcurrentHashMap<>();
     private final Set<UUID> loading = ConcurrentHashMap.newKeySet();
+    private final Map<UUID, Long> lastPromptAt = new ConcurrentHashMap<>();
 
     private final JavaPlugin plugin;
 
@@ -212,6 +213,15 @@ public class AuthManager {
     }
 
     public void sendAuthPrompt(Player player) {
+        if (!isAuthEnabled()) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        long last = lastPromptAt.getOrDefault(player.getUniqueId(), 0L);
+        if (now - last < 3000L) {
+            return;
+        }
+        lastPromptAt.put(player.getUniqueId(), now);
         if (!isRegistered(player)) {
             messages.sendRaw(player, messages.get("auth.register"));
         } else {

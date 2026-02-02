@@ -619,6 +619,17 @@ public class GuildManager {
         messages.send(player, "info.guild-reliability", "{value}", String.valueOf(reliability));
     }
 
+    public void sendHelp(Player player) {
+        List<String> lines = configManager.getMessages().getStringList("info.guild-help-lines");
+        if (lines == null || lines.isEmpty()) {
+            messages.sendRaw(player, "&e/g create|disband|invite|accept|kick|leave|info|top|bank|bonus|promote|demote|chat|mutechat|rules|motd|reliability|quest|takequest|refusequest");
+            return;
+        }
+        for (String line : lines) {
+            messages.sendRaw(player, MessageService.colorize(line));
+        }
+    }
+
     public void setMotd(Player sender, String motd) {
         if (!hasGuildPermission(sender.getUniqueId(), "manageRules")) {
             messages.send(sender, "errors.guild-no-permission");

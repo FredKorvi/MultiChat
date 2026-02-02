@@ -54,6 +54,11 @@ info:
   guild-motd: "&eMOTD гильдии: {motd}"
   guild-motd-updated: "&aMOTD гильдии обновлено."
   guild-motd-empty: "&7MOTD гильдии не задано."
+  guild-help-lines:
+    - "&6Команды гильдии:"
+    - "&e/g create|disband|invite|accept|kick|leave|info|top"
+    - "&e/g bank|bonus|promote|demote|chat|mutechat"
+    - "&e/g rules|motd|reliability|quest|takequest|refusequest"
   moderation-kick: "&cВас кикнули: {reason}"
   moderation-warn: "&eВы получили предупреждение: {reason}"
 quest:

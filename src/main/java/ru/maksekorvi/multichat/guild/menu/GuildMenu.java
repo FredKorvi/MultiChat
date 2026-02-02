@@ -29,6 +29,7 @@ public class GuildMenu {
         inv.setItem(14, item(Material.ANVIL, "&eНадежность", "&7Показать вашу надежность"));
         inv.setItem(15, item(Material.BOOK, "&eЧат гильдии", "&7Вкл/выкл чат гильдии"));
         inv.setItem(16, item(Material.INK_SACK, "&eМут участника", "&7Используйте: /g mutechat <ник>"));
+        inv.setItem(22, item(Material.PAPER, "&eПомощь", "&7Список команд гильдии"));
         player.openInventory(inv);
     }
 
@@ -62,6 +63,9 @@ public class GuildMenu {
                 break;
             case 16:
                 guildManager.sendRawHint(player, "&eЧтобы замутить участника: &6/g mutechat <ник>");
+                break;
+            case 22:
+                guildManager.sendHelp(player);
                 break;
             default:
                 break;
