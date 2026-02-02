@@ -1,0 +1,6 @@
+moderation:
+  mute:
+    blockCommands: true
+  defaultBanReason: "Нарушение правил"
+  defaultMuteReason: "Нарушение правил"
+  defaultWarnReason: "Предупреждение"

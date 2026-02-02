@@ -1,0 +1,7 @@
+broadcast:
+  enabled: true
+  intervalSeconds: 300
+  mode: "cycle" # cycle | random
+  messages:
+    - "&eПосетите наш Discord!"
+    - "&eПишите /rules чтобы увидеть правила сервера."
