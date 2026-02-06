@@ -38,7 +38,11 @@ public class GuildMenu {
         ItemMeta meta = stack.getItemMeta();
         if (meta != null) {
             meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
-            meta.setLore(Arrays.asList(lore));
+            String[] coloredLore = new String[lore.length];
+            for (int i = 0; i < lore.length; i++) {
+                coloredLore[i] = ChatColor.translateAlternateColorCodes('&', lore[i]);
+            }
+            meta.setLore(Arrays.asList(coloredLore));
             stack.setItemMeta(meta);
         }
         return stack;
