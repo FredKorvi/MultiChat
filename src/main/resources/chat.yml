@@ -1,0 +1,14 @@
+channels:
+  global:
+    name: "Возглас"
+    format: "&6(Возглас)&r {guild} {prefix}{player} &7> &f{message}"
+  local:
+    name: "Шёпот"
+    radius: 35
+    format: "&7(Шёпот)&r {guild} {prefix}{player} &7> &f{message}"
+  guild:
+    name: "Гильдия"
+    format: "&2{guild}&7: &a({guild_rank}) {player} &7> &f{message}"
+options:
+  prefixGlobal: "!"
+  allowCommandSwitch: true
